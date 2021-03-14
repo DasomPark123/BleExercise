@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">BleExercise</string>
+
+    <!-- MainActivity -->
+    <string name="central">Central</string>
+    <string name="peripheral">peripheral</string>
+
+    <string name="send">send</string>
+    <string name="close">close</string>
+</resources>
