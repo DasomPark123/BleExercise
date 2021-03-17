@@ -17,7 +17,7 @@ import android.content.Context;
 import android.os.ParcelUuid;
 import android.util.Log;
 
-import com.example.bleexercise.Constants;
+import com.example.bleexercise.util.Constants;
 
 public class PeripheralManager {
 
@@ -63,8 +63,12 @@ public class PeripheralManager {
         characteristic = new BluetoothGattCharacteristic(Constants.CHARACTERISTIC_UUID,
                 BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_WRITE | BluetoothGattCharacteristic.PROPERTY_NOTIFY,
                 BluetoothGattCharacteristic.PERMISSION_READ | BluetoothGattCharacteristic.PERMISSION_WRITE);
-        characteristic.addDescriptor(new BluetoothGattDescriptor(Constants.CONFIG_UUID, (BluetoothGattCharacteristic.PERMISSION_READ | BluetoothGattCharacteristic.PERMISSION_WRITE)));
+        characteristic.addDescriptor(new BluetoothGattDescriptor(Constants.DESCRIPTOR_UUID, (BluetoothGattCharacteristic.PERMISSION_READ | BluetoothGattCharacteristic.PERMISSION_WRITE)));
         characteristic.setValue(new byte[]{0, 0});
+        bluetoothGattService.addCharacteristic(characteristic);
+
+        startAdvertising();
+        startServer();
     }
 
     public void startAdvertising() {
@@ -74,17 +78,20 @@ public class PeripheralManager {
             return;
         }
 
+        /* Advertiser setting */
         AdvertiseSettings advSettings = new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
                 .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
                 .setConnectable(true)
                 .build();
 
+        /* Advertising 할 데이터 패킷 */
         AdvertiseData advData = new AdvertiseData.Builder()
                 .setIncludeTxPowerLevel(true)
                 .addServiceUuid(ParcelUuid.fromString(Constants.SERVICE_STRING))
                 .build();
 
+        /* 디바이스가 Scan 되었을때 보여질 데이터 패킷 */
         AdvertiseData advScanResponse = new AdvertiseData.Builder()
                 .setIncludeDeviceName(true)
                 .build();
@@ -98,6 +105,18 @@ public class PeripheralManager {
             return;
 
         bluetoothLeAdvertiser.stopAdvertising(advCallback);
+    }
+
+    private void startServer()
+    {
+        bluetoothGattServer = bluetoothManager.openGattServer(context, bluetoothGattServerCallback);
+        if(bluetoothGattServer == null)
+        {
+            Log.d(TAG, "Unable to create GATT server");
+            peripheralCallback.onStatusMsg("Unable to create GATT server");
+            return;
+        }
+        bluetoothGattServer.addService(bluetoothGattService);
     }
 
     /* Advertise Callback */

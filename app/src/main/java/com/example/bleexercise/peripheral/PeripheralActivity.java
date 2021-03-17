@@ -1,6 +1,8 @@
 package com.example.bleexercise.peripheral;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -12,7 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.bleexercise.R;
-import com.example.bleexercise.Utils;
+import com.example.bleexercise.util.Utils;
 
 import java.util.Calendar;
 
@@ -25,18 +27,14 @@ public class PeripheralActivity extends AppCompatActivity {
 
     private final int REQUEST_BLE = 0x1001;
 
+    private PeripheralManager peripheralManager;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        tvData = findViewById(R.id.tv_data);
-        btnSend = findViewById(R.id.btn_send);
-        btnClose = findViewById(R.id.btn_close);
-
-        btnSend.setOnClickListener(onClickListener);
-        btnClose.setOnClickListener(onClickListener);
-
-        utils = Utils.getInstance();
+        initView();
+        initServer();
     }
 
     @Override
@@ -45,9 +43,24 @@ public class PeripheralActivity extends AppCompatActivity {
 
     }
 
+    private void initView()
+    {
+        tvData = findViewById(R.id.tv_data);
+        btnSend = findViewById(R.id.btn_send);
+        btnClose = findViewById(R.id.btn_close);
+
+        btnSend.setOnClickListener(onClickListener);
+        btnClose.setOnClickListener(onClickListener);
+
+        utils = Utils.getInstance();
+
+        peripheralManager = PeripheralManager.getInstance();
+    }
+
     private void initServer()
     {
-
+        peripheralManager.setCallback(peripheralCallback);
+        peripheralManager.initServer(this);
     }
 
     private void showStatusMsg(final String message)
@@ -75,8 +88,12 @@ public class PeripheralActivity extends AppCompatActivity {
 
     private void requestEnableBLE()
     {
-        Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        startActivityForResult(intent, REQUEST_BLE);
+        BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothAdapter btAdapter = btManager.getAdapter();
+        if(btAdapter == null || !btAdapter.isEnabled()) {
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(intent, REQUEST_BLE);
+        }
     }
 
     @Override

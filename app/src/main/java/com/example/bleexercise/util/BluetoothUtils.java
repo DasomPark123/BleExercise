@@ -1,16 +1,16 @@
-package com.example.bleexercise.central;
+package com.example.bleexercise.util;
 
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 
-import com.example.bleexercise.Constants;
+import com.example.bleexercise.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class CentralUtils {
+public class BluetoothUtils {
 
     /* BLE 속성을 찾아줌 */
     public List<BluetoothGattCharacteristic> findBLECharacteristics(BluetoothGatt bluetoothGatt) {

@@ -3,6 +3,8 @@ package com.example.bleexercise.central;
 import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
@@ -22,7 +24,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.bleexercise.R;
-import com.example.bleexercise.Utils;
+import com.example.bleexercise.util.Utils;
 
 import java.util.Calendar;
 
@@ -40,6 +42,7 @@ public class CentralActivity extends Activity {
     private final int REQUEST_LOCATION_ON = 0x1001;
     private final int REQUEST_ENABLE_BLUETOOTH = 0x1002;
     private final int REQUEST_LOCATION_PERMISSION = 0x1003;
+    private final int REQUEST_BLE = 0x1004;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -68,6 +71,16 @@ public class CentralActivity extends Activity {
                 scrollView.fullScroll(ScrollView.FOCUS_DOWN);
             }
         });
+    }
+
+    private void requestEnableBLE()
+    {
+        BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothAdapter btAdapter = btManager.getAdapter();
+        if(btAdapter == null || !btAdapter.isEnabled()) {
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(intent, REQUEST_BLE);
+        }
     }
 
     private void showStatusMsg(final String msg)

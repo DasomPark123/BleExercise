@@ -1,7 +1,6 @@
-package com.example.bleexercise;
+package com.example.bleexercise.util;
 
 import android.app.Activity;
-import android.content.Context;
 import android.widget.Toast;
 
 public class Utils {

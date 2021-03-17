@@ -23,15 +23,14 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
-import com.example.bleexercise.Constants;
+import com.example.bleexercise.util.BluetoothUtils;
+import com.example.bleexercise.util.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import javax.security.auth.callback.PasswordCallback;
 
 public class CentralManager {
 
@@ -54,7 +53,7 @@ public class CentralManager {
 
     private Handler scanHandler;
 
-    private CentralUtils centralUtils;
+    private BluetoothUtils centralUtils;
 
     private boolean isConnected = false;
     private boolean isScanning = false;
@@ -65,7 +64,7 @@ public class CentralManager {
         this.context = context;
 
         if (centralUtils == null)
-            centralUtils = new CentralUtils();
+            centralUtils = new BluetoothUtils();
     }
 
     public static CentralManager getInstance(Context context) {
@@ -328,7 +327,7 @@ public class CentralManager {
             BluetoothGattCharacteristic characteristic = centralUtils.findCharacteristic(bluetoothGatt, Constants.CHARACTERISTIC_UUID);
             gatt.setCharacteristicNotification(characteristic, true);
 
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(Constants.CONFIG_STRING));
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(Constants.DESCRIPTOR_STRING));
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             boolean success = gatt.writeDescriptor(descriptor);
             if (success)
