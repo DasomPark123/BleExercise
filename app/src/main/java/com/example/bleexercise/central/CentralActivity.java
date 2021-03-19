@@ -47,9 +47,8 @@ public class CentralActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_central);
         init();
-        StartScanTask startScanTask = new StartScanTask();
-        startScanTask.execute();
     }
 
     private void init() {
@@ -60,6 +59,18 @@ public class CentralActivity extends Activity {
         utils = new Utils();
 
         centralManager = CentralManager.getInstance(this);
+        centralManager.setCentralCallback(centralCallback);
+
+        /* 스캔 시작 */
+        boolean result = centralManager.startScan(this);
+        if(result)
+        {
+            centralCallback.onStatus("Successfully connected");
+        }
+        else
+        {
+            centralCallback.onStatus("Connection failed");
+        }
     }
 
     private void scrollToBottom()
@@ -71,16 +82,6 @@ public class CentralActivity extends Activity {
                 scrollView.fullScroll(ScrollView.FOCUS_DOWN);
             }
         });
-    }
-
-    private void requestEnableBLE()
-    {
-        BluetoothManager btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        BluetoothAdapter btAdapter = btManager.getAdapter();
-        if(btAdapter == null || !btAdapter.isEnabled()) {
-            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(intent, REQUEST_BLE);
-        }
     }
 
     private void showStatusMsg(final String msg)

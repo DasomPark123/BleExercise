@@ -36,9 +36,14 @@ public class PeripheralManager {
 
     private PeripheralCallback peripheralCallback;
 
-    public static PeripheralManager getInstance() {
+    public PeripheralManager(Context context)
+    {
+        this.context = context;
+    }
+
+    public static PeripheralManager getInstance(Context context) {
         if (peripheralManager == null)
-            peripheralManager = new PeripheralManager();
+            peripheralManager = new PeripheralManager(context);
 
         return peripheralManager;
     }

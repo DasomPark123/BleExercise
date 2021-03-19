@@ -32,7 +32,7 @@ public class PeripheralActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setContentView(R.layout.activity_peripheral);
         initView();
         initServer();
     }
@@ -54,7 +54,7 @@ public class PeripheralActivity extends AppCompatActivity {
 
         utils = Utils.getInstance();
 
-        peripheralManager = PeripheralManager.getInstance();
+        peripheralManager = PeripheralManager.getInstance(this);
     }
 
     private void initServer()

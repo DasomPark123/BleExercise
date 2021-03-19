@@ -53,7 +53,7 @@ public class CentralManager {
 
     private Handler scanHandler;
 
-    private BluetoothUtils centralUtils;
+    private BluetoothUtils bluetoothUtils;
 
     private boolean isConnected = false;
     private boolean isScanning = false;
@@ -63,8 +63,8 @@ public class CentralManager {
     public CentralManager(Context context) {
         this.context = context;
 
-        if (centralUtils == null)
-            centralUtils = new BluetoothUtils();
+        if (bluetoothUtils == null)
+            bluetoothUtils = new BluetoothUtils();
     }
 
     public static CentralManager getInstance(Context context) {
@@ -110,20 +110,18 @@ public class CentralManager {
         }
 
         /* GPS on 되어있는지 체크 */
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             centralCallback.requestLocationOn();
             centralCallback.onStatus("Requesting enable location on");
-        }
 
+
+        /* BLE Scanning 을 위한 BluetoothLEScanner 객체 생성 */
         bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
 
         /* 이미 연결된 상태인 경우를 대비해 disconnect 호출 */
 
-        /* Service, Characteristic, Descriptor 에 맞는 UUID 인지 체크 */
+        /* 스캔 필터를 리스트에 추가함 */
         List<ScanFilter> filters = new ArrayList<>();
         ScanFilter scanFilter = new ScanFilter.Builder().setServiceUuid(new ParcelUuid(Constants.SERVICE_UUID)).build();
-
-        /* 스캔 필터를 리스트에 추가함 */
         filters.add(scanFilter);
 
         /* 저전력 스캔 모드를 셋팅함 */
@@ -131,14 +129,15 @@ public class CentralManager {
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
                 .build();
 
+        /* 결과 값을 전달 받기 위한 Callback 생성 */
         scanResults = new HashMap<>();
         scanCallback = new BLEScanCallback(scanResults);
 
         /* 스캔할 준비가됨. 스캔 시작 */
         bluetoothLeScanner.startScan(filters, settings, scanCallback);
-
         isScanning = true;
 
+        /* 일정 시간 scanning 이후 Scanning stop */
         scanHandler = new Handler();
         Runnable runnable = new Runnable() {
             @Override
@@ -149,10 +148,7 @@ public class CentralManager {
         };
         scanHandler.postDelayed(runnable, SCAN_PERIOD);
 
-        /* 원하는 디바이스를 찾을 경우 connect */
-
         return isConnected;
-
     }
 
     /* 스캔 정지 */
@@ -198,6 +194,7 @@ public class CentralManager {
         bluetoothGatt = device.connectGatt(context, false, gattClientCallback);
     }
 
+
     /* 디바이스 연결 해제 */
     public void disconnectGattServer() {
         Log.d(TAG, "Closing Gatt connection");
@@ -219,7 +216,7 @@ public class CentralManager {
         }
 
         /* GATT 서버에서 command 속성을 찾음 */
-        BluetoothGattCharacteristic characteristic = centralUtils.findCharacteristic(bluetoothGatt, Constants.CHARACTERISTIC_UUID);
+        BluetoothGattCharacteristic characteristic = bluetoothUtils.findCharacteristic(bluetoothGatt, Constants.CHARACTERISTIC_UUID);
 
         if (characteristic == null) {
             Log.e(TAG, "Unable to find cmd characteristic");
@@ -253,7 +250,13 @@ public class CentralManager {
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
             Log.d(TAG, "onScanResult");
-            addScanResult(result);
+            //addScanResult(result);
+
+            /* Connect with macAddress : 00:24:06:f7:4f:d9 */
+            if(result.getDevice().getAddress().equalsIgnoreCase("00:24:06:f7:4f:d9"))
+            {
+                connectDevice(result.getDevice());
+            }
         }
 
         @Override
@@ -287,10 +290,10 @@ public class CentralManager {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
-//                if(status != BluetoothGatt.GATT_SUCCESS) {
-//                    disconnectGattServer();
-//                    return;
-//                }
+                if(status != BluetoothGatt.GATT_SUCCESS) {
+                    disconnectGattServer();
+                    return;
+                }
 
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 centralCallback.onStatus("Connected");
@@ -311,7 +314,7 @@ public class CentralManager {
                 return;
             }
 
-            List<BluetoothGattCharacteristic> matchingCharacteristics = centralUtils.findBLECharacteristics(gatt);
+            List<BluetoothGattCharacteristic> matchingCharacteristics = bluetoothUtils.findBLECharacteristics(gatt);
             for (BluetoothGattCharacteristic characteristic : matchingCharacteristics) {
                 Log.d(TAG, "characteristic: " + characteristic.getUuid());
             }
@@ -324,7 +327,7 @@ public class CentralManager {
             Log.d(TAG, " Service discovery is successful");
 
             /* 이걸 설정해 줘야 onCharacteristicChanged callback 을 받을 수 있음 */
-            BluetoothGattCharacteristic characteristic = centralUtils.findCharacteristic(bluetoothGatt, Constants.CHARACTERISTIC_UUID);
+            BluetoothGattCharacteristic characteristic = bluetoothUtils.findCharacteristic(bluetoothGatt, Constants.CHARACTERISTIC_UUID);
             gatt.setCharacteristicNotification(characteristic, true);
 
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(Constants.DESCRIPTOR_STRING));
@@ -357,10 +360,14 @@ public class CentralManager {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
-
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.d(TAG, "Characteristic read successfully");
-                readCharacteristic(characteristic);
+
+                byte[] msg = characteristic.getValue();
+                Log.d(TAG, "read:" + msg.toString());
+                centralCallback.onStatus("read : " + msg.toString());
+                centralCallback.onToast("read : " + msg);
+
             } else {
                 Log.e(TAG, "Characteristic read unsuccessful, status: " + status);
             }
